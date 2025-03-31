@@ -23,15 +23,15 @@ setup-hooks:
 
 # Run tests
 test:
-    pytest
+    uv run pytest
 
 # Run tests with coverage
 test-cov:
-    pytest --cov=backend
+    uv run pytest --cov=backend
 
 # Run tests with HTML report
 test-html:
-    pytest --html=test-results/report.html --self-contained-html
+    uv run pytest --html=test-results/report.html --self-contained-html
 
 # Run static type checking
 typecheck:

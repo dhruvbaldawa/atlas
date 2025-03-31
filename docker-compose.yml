@@ -1,0 +1,65 @@
+services:
+  # PostgreSQL database for both application data and Temporal
+  postgres:
+    container_name: atlas-postgres
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Initialize databases for both application and Temporal
+      - ./docker/postgres/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    networks:
+      - atlas-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Temporal server
+  temporal:
+    container_name: temporal-server
+    image: temporalio/auto-setup:1.27.2
+    depends_on:
+      - postgres
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PWD=postgres
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+    ports:
+      - 7233:7233
+    volumes:
+      - ./temporal-config:/etc/temporal/config/dynamicconfig
+    networks:
+      - atlas-network
+
+  # Temporal Web UI
+  temporal-ui:
+    container_name: temporal-ui
+    image: temporalio/ui:2.21.3
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - 8080:8080
+    networks:
+      - atlas-network
+
+networks:
+  atlas-network:
+    driver: bridge
+    name: atlas-network
+
+volumes:
+  postgres-data:
+    driver: local

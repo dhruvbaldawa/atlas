@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend"]
+
+[project]
+name = "atlas"
+version = "0.1.0"
+description = "ATLAS - A system for transforming web articles into valuable knowledge assets"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "ATLAS Team"}
+]
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "sqlmodel>=0.0.16",
+    "psycopg2-binary>=2.9.9",
+    "httpx>=0.28.0",
+    "pydantic>=2.7.0",
+    "python-dotenv>=1.1.0",
+    "typer>=0.15.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
+    "pytest-html>=4.1.0",
+    "ruff>=0.3.0",
+    "pyright>=1.1.350",
+    "pre-commit>=4.2.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "UP", "C90", "D"]
+ignore = ["D203", "D212"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend", "frontend"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+include = ["backend"]
+exclude = ["**/__pycache__", "**/tests"]
+reportMissingTypeStubs = "warning"
+reportIncompatibleMethodOverride = "warning"
+reportIncompatibleVariableOverride = "warning"
+reportMissingParameterType = "warning"
+
+[tool.pytest.ini_options]
+testpaths = ["backend"]
+python_files = "*_test.py"
+python_functions = "test_*"

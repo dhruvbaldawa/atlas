@@ -8,6 +8,7 @@ default:
 # Install dependencies
 install:
     uv pip install -e ".[dev]"
+    just lock
 
 # Sync virtual environment with pyproject.toml (including dev dependencies)
 sync:
@@ -85,3 +86,11 @@ install-locked:
 
 # Setup the whole project from scratch
 setup: create-venv lock install-locked setup-hooks
+
+# Run the API server with auto-reload
+server:
+    uvicorn backend.api.main:app --reload
+
+# Run the worker
+worker:
+    python -m backend.workers.worker

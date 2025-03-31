@@ -1,3 +1,4 @@
 - All the relevent context about how to work and what we are building is in `.rules/` directory.
 - Keep all documents up-to-date with the current state of the project and as we develop.
 - Plans for milestones in docs/milestones/milestone-*.md should be updated and marked as completed or in progress as we develop.
+- Don't assume and just use web search to find up-to-date information about usage, API or any other aspect of the project.

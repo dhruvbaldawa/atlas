@@ -94,3 +94,15 @@ server:
 # Run the worker
 worker:
     python -m backend.workers.worker
+
+# Create a new migration with a message
+migrate message="auto":
+    alembic revision --autogenerate -m "{{message}}"
+
+# Apply all migrations
+migrate-up:
+    alembic upgrade head
+
+# Rollback one migration
+migrate-down:
+    alembic downgrade -1

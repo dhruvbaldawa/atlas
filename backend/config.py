@@ -23,8 +23,12 @@ class DatabaseSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="DB_", extra="ignore")
 
     def get_postgres_uri(self) -> str:
-        """Get PostgreSQL connection URI."""
+        """Get PostgreSQL connection URI with asyncpg driver."""
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+
+    def get_sync_url(self) -> str:
+        """Get synchronous PostgreSQL connection URL for migrations."""
+        return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
 
 class TemporalSettings(BaseSettings):

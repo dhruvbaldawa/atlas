@@ -29,6 +29,7 @@ dependencies = [
     "temporalio>=1.5.0",
     "ulid-py>=1.1.0",
     "greenlet>=3.0.0",
+    "alembic>=1.13.0",
 ]
 
 [project.optional-dependencies]
@@ -44,6 +45,7 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+exclude = ["**/migrations/versions/**"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "B", "UP", "C90", "D"]
@@ -59,7 +61,7 @@ convention = "google"
 pythonVersion = "3.12"
 typeCheckingMode = "basic"
 include = ["backend"]
-exclude = ["**/__pycache__", "**/tests"]
+exclude = ["**/__pycache__", "**/tests", "**/migrations/versions"]
 reportMissingTypeStubs = "warning"
 reportIncompatibleMethodOverride = "warning"
 reportIncompatibleVariableOverride = "warning"

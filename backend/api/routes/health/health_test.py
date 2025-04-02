@@ -40,18 +40,17 @@ async def test_health_check_database_error(client: TestClient, monkeypatch: pyte
     """Test health check when database connection fails."""
 
     # Given a database error
-    async def mock_db_session_error():
-        class FailedSessionManager:
-            async def __aenter__(self):
-                raise Exception("Database connection error")
+    # Create a context manager class that raises an exception on enter
+    class FailedSessionManager:
+        async def __aenter__(self):
+            raise Exception("Database connection error")
 
-            async def __aexit__(self, exc_type: type, exc_val: Exception, exc_tb: object):
-                pass
+        async def __aexit__(self, exc_type: type, exc_val: Exception, exc_tb: object):
+            pass
 
-        return FailedSessionManager()
-
-    # Apply the patch only within this test
-    with patch("backend.api.routes.health.router.get_db_session", side_effect=mock_db_session_error):
+    # Mock the get_db_session function to return the context manager directly
+    # This avoids the unawaited coroutine issue by not using an async function
+    with patch("backend.api.routes.health.router.get_db_session", return_value=FailedSessionManager()):
         # When
         response = client.get("/health")
 

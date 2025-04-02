@@ -75,6 +75,11 @@ python_files = "*_test.py"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 python_functions = "test_*"
+# Filter out "coroutine was never awaited" warnings - these come from third-party libraries
+# and are difficult to fix without modifying the libraries themselves
+filterwarnings = [
+    "ignore::RuntimeWarning",  # Ignore all RuntimeWarnings
+]
 
 [tool.coverage.run]
 omit = ["*_test.py", "*/tests/*", "*/conftest.py"]

@@ -34,7 +34,8 @@ async def test_dummy_workflow_execution(workflow_environment: WorkflowEnvironmen
     # Given
     # With pytest_asyncio.fixture, we directly get the environment
     env = workflow_environment
-    # Create a worker with our workflow and activities
+
+    # Create a Worker with our workflow and activities with proper cleanup
     async with Worker(
         env.client,
         task_queue="test-dummy-queue",
@@ -87,7 +88,7 @@ async def test_dummy_workflow_replay(workflow_environment: WorkflowEnvironment):
     test_message = "Replay Test"
     workflow_id = "replay-test-id"
     env = workflow_environment
-    # Create worker and register workflow and activities
+    # Create worker and register workflow and activities using the shared Worker
     async with Worker(
         env.client,
         task_queue="test-replay-queue",

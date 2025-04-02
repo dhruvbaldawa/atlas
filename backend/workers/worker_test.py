@@ -84,10 +84,14 @@ async def test_run_worker():
         patch("backend.workers.worker.shutdown_waiter") as mock_shutdown_waiter,
     ):
         # Make shutdown_waiter return a coroutine that completes immediately
-        mock_shutdown_waiter.return_value = asyncio.sleep(0)
+        shutdown_coro = asyncio.sleep(0)
+        mock_shutdown_waiter.return_value = shutdown_coro
 
         # When - Call the function with our mock client
         await run_worker(mock_client)
+
+        # Explicitly await the shutdown coroutine to prevent warnings
+        await shutdown_coro
 
         # Then - Verify Worker was constructed with the right parameters
         mock_worker_cls.assert_called_once()

@@ -110,8 +110,10 @@ async def health_check(
 
     # Check Temporal connection
     try:
-        # Just try to get the namespace - this is a basic connectivity test
-        await temporal_client.get_workflow_handle("dummy-id").describe()
+        # Check Temporal service client health directly
+        # This is more reliable than trying to access a specific workflow
+        await temporal_client.service_client.check_health()
+        # If we get here, Temporal is connected
     except Exception as e:
         logger.error(f"Temporal health check failed: {e}")
         temporal_ok = False

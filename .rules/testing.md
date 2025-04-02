@@ -220,13 +220,20 @@ def test_submit_article_api():
   * Test user interactions and state updates.
   * Verify API client integration with mock requests.
 
-## Format for Unit Tests
+## Test Structure: Given-When-Then Pattern
 
-We follow the Given-When-Then pattern from Behavior-Driven Development (BDD) for structuring test cases:
+### Consistently Apply Given-When-Then for All Tests
 
-### 1. Given
+We strictly follow the **Given-When-Then** pattern from Behavior-Driven Development (BDD) for structuring ALL test cases. This applies to unit tests, integration tests, and especially workflow and activity tests. This pattern creates consistent, readable tests that clearly express the test's intent and expected outcomes.
 
-Establish the initial context and preconditions for the test:
+### The Given-When-Then Structure
+
+#### 1. Given (Arrange)
+
+Establish the initial context and preconditions for the test. This section should:
+- Set up test data and inputs
+- Configure any required mocks or test doubles
+- Initialize the system under test
 
 ```python
 # Given
@@ -236,18 +243,21 @@ mock_db.setup([])  # Empty database
 activity = StoreArticleActivity(db=mock_db)
 ```
 
-### 2. When
+#### 2. When (Act)
 
-Execute the action or behavior being tested:
+Execute the action or behavior being tested. This section should be concise and focused on the specific action being tested:
 
 ```python
 # When
 result = await activity.store_article(article_url)
 ```
 
-### 3. Then
+#### 3. Then (Assert)
 
-Verify the expected outcomes and postconditions:
+Verify the expected outcomes and postconditions. This section should:
+- Check that the result matches expectations
+- Verify side effects or state changes
+- Use clear, specific assertions
 
 ```python
 # Then
@@ -257,20 +267,24 @@ assert result.status == "pending"
 assert len(mock_db.articles) == 1
 ```
 
-### Complete Example
+### Comment Your Test Structure
+
+Always include `# Given`, `# When`, and `# Then` comments in your tests to clearly divide the sections. This makes tests more readable and helps identify what part of the test might be failing.
+
+### Example: Activity Test Using Given-When-Then
 
 ```python
 async def test_store_article_activity_creates_new_article():
     """Verify that the store article activity creates a new article in the database."""
-    # given
+    # Given
     article_url = "https://example.com/test-article"
     mock_db = MockDatabase()
     activity = StoreArticleActivity(db=mock_db)
 
-    # when
+    # When
     result = await activity.store_article(article_url)
 
-    # then
+    # Then
     assert result.id is not None
     assert result.url == article_url
     assert result.status == "pending"
@@ -279,51 +293,241 @@ async def test_store_article_activity_creates_new_article():
     assert stored_article.url == article_url
 ```
 
-## Testing Temporal-Specific Components
-
-### Mocking Temporal Services
-
-Use the Temporal Python SDK testing utilities:
+### Example: Temporal Workflow Test Using Given-When-Then
 
 ```python
-# In backend/tests/conftest.py
-@pytest.fixture
-async def workflow_environment():
-    env = await WorkflowEnvironment.start_local()
-    client = await env.client()
+@pytest.mark.asyncio
+async def test_article_workflow_processes_content():
+    """Verify that the article workflow correctly processes content from a URL."""
+    # Given
+    article_url = "https://example.com/test-article"
+    
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        async with Worker(
+            env.client,
+            task_queue="test-queue",
+            workflows=[ArticleWorkflow],
+            activities=[fetch_content_activity, process_content_activity],
+        ):
+            # When
+            result = await env.client.execute_workflow(
+                ArticleWorkflow.run,
+                article_url,
+                id="test-workflow-id",
+                task_queue="test-queue",
+            )
+            
+            # Then
+            assert result["status"] == "completed"
+            assert result["url"] == article_url
+            assert "content" in result
+            assert "processed_at" in result
+```
 
-    # Register your workflows and activities
-    worker = Worker(client, task_queue="test-queue")
-    worker.register_workflow(SubmitArticleWorkflow)
-    worker.register_activity(store_article_activity)
-    await worker.start()
+## Testing Temporal-Specific Components
 
-    yield client
+### Approaches to Testing Temporal Workflows and Activities
 
-    await worker.shutdown()
-    await env.shutdown()
+Temporal's Python SDK provides powerful testing utilities that enable different approaches to testing:
 
-# Then in your workflow_test.py file:
-async def test_submit_article(workflow_environment):
-    # Test using the shared fixture
-    result = await workflow_environment.execute_workflow(...)
+#### 1. Direct Testing of Activities
+
+For simple activity functions, test them directly without the Temporal framework:
+
+```python
+@pytest.mark.asyncio
+async def test_fetch_content_activity_direct():
+    """Test the activity function directly without Temporal."""
+    # Given
+    url = "https://example.com/article"
+    
+    # When
+    result = await fetch_content_activity(url)
+    
+    # Then
+    assert "content" in result
+    assert result["status"] == "success"
+```
+
+#### 2. In-Memory Testing with WorkflowEnvironment
+
+Use Temporal's testing framework to run workflows and activities in a fully functional but isolated environment:
+
+```python
+@pytest.mark.asyncio
+async def test_workflow_with_real_activities():
+    """Test a workflow with real activities using Temporal's test environment."""
+    # Given
+    # Create an in-memory test environment that simulates Temporal server
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        # Set up a worker with the workflow and activities
+        async with Worker(
+            env.client,
+            task_queue="test-queue",
+            workflows=[ArticleWorkflow],
+            activities=[fetch_content_activity, process_content_activity],
+        ):
+            # When
+            # Execute the workflow
+            result = await env.client.execute_workflow(
+                ArticleWorkflow.run,
+                "https://example.com/article",
+                id="test-workflow-id",
+                task_queue="test-queue",
+            )
+            
+            # Then
+            assert result["status"] == "completed"
+```
+
+#### 3. Hybrid Approach with Mocked Activities
+
+Test workflow logic in isolation by mocking activities while still using the Temporal test environment:
+
+```python
+@pytest.mark.asyncio
+async def test_workflow_with_mocked_activities():
+    """Test workflow logic with mocked activities."""
+    # Given
+    # Create mocks for activities
+    async def mock_fetch_content(url):
+        return {"content": "Test content", "url": url}
+        
+    async def mock_process_content(content):
+        return {"processed": True, "word_count": 100}
+    
+    # Register the mock activities in the test environment
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        async with Worker(
+            env.client,
+            task_queue="test-queue",
+            workflows=[ArticleWorkflow],
+            activities={
+                "fetch_content_activity": mock_fetch_content,
+                "process_content_activity": mock_process_content,
+            },
+        ):
+            # When
+            result = await env.client.execute_workflow(
+                ArticleWorkflow.run,
+                "https://example.com/article",
+                id="test-workflow-id",
+                task_queue="test-queue",
+            )
+            
+            # Then
+            assert result["processed"] == True
+            assert result["word_count"] == 100
+```
+
+### Time-Skipping for Efficient Tests
+
+Temporal's time-skipping feature is crucial for testing workflows with timers and delays:
+
+```python
+@pytest.mark.asyncio
+async def test_workflow_with_timer():
+    """Test a workflow that includes a timer or scheduled activity."""
+    # Given
+    # Start environment with time-skipping enabled
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        async with Worker(
+            env.client,
+            task_queue="test-timer-queue",
+            workflows=[WorkflowWithTimer],
+            activities=[delayed_activity],
+        ):
+            # When
+            # This will execute almost instantly, even if the workflow has
+            # sleep(3600) or other long-running timers
+            result = await env.client.execute_workflow(
+                WorkflowWithTimer.run,
+                duration_seconds=3600,  # 1 hour delay that executes instantly
+                id="timer-test-id",
+                task_queue="test-timer-queue",
+            )
+            
+            # Then
+            assert result["timer_completed"] == True
+            assert "execution_time" in result
 ```
 
 ### Testing Workflow Determinism
 
-Ensure workflows produce the same results given the same history:
+Verify that workflows produce deterministic results by testing execution with history replay:
 
 ```python
+@pytest.mark.asyncio
 async def test_workflow_determinism():
-    """Verify that workflows are deterministic by replaying execution history."""
-    # First run
-    result1 = await client.execute_workflow(MyWorkflow.run, "input")
+    """Verify workflow determinism through history replay."""
+    # Given
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        async with Worker(
+            env.client,
+            task_queue="test-replay-queue",
+            workflows=[MyWorkflow],
+            activities=[my_activity],
+        ):
+            # When
+            # Execute the workflow once
+            workflow_id = "test-workflow-id"
+            await env.client.execute_workflow(
+                MyWorkflow.run,
+                "test-input",
+                id=workflow_id,
+                task_queue="test-replay-queue",
+            )
+            
+            # Then
+            # Get the workflow handle and verify it completed successfully
+            handle = env.client.get_workflow_handle(workflow_id)
+            result = await handle.result()
+            assert result is not None
+            
+            # For complex workflow logic, additional replay testing can be
+            # implemented using env.replay_workflow or WorkflowReplayer
+```
 
-    # Replay from history
-    history = await client.get_workflow_history("workflow_id")
-    replayer = WorkflowReplayer()
-    replayer.register_workflow(MyWorkflow)
-    await replayer.replay_workflow(history)  # Should not raise exceptions
+### Testing Workflow Failure and Recovery
+
+Test how workflows handle activity failures and recovery:
+
+```python
+@pytest.mark.asyncio
+async def test_workflow_handles_activity_failure():
+    """Test workflow recovery from activity failures."""
+    # Given
+    # Create an activity that fails on first call but succeeds on retry
+    call_count = 0
+    
+    async def failing_activity(input):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise ValueError("Simulated failure")
+        return {"status": "success", "attempt": call_count}
+    
+    # Test the workflow with the failing activity
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        async with Worker(
+            env.client,
+            task_queue="test-queue",
+            workflows=[MyWorkflow],
+            activities={"my_activity": failing_activity},
+        ):
+            # When
+            # Execute workflow with the failing activity
+            result = await env.client.execute_workflow(
+                MyWorkflow.run,
+                "test-input",
+                id="failure-test-id",
+                task_queue="test-queue",
+            )
+            
+            # Then
+            # The workflow should complete despite the activity failure
+            assert result["status"] == "success"
+            assert call_count == 2  # Activity was retried once
 ```
 
 ## Test Data Management

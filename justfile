@@ -26,13 +26,11 @@ setup-hooks:
 test:
     uv run pytest
 
-# Run tests with coverage
+# Run tests with coverage and generate reports (XML and HTML)
 test-cov:
-    uv run pytest --cov=backend
-
-# Run tests with HTML report
-test-html:
-    uv run pytest --html=test-results/report.html --self-contained-html
+    @echo "Running tests with coverage..."
+    mkdir -p test-results/coverage
+    uv run pytest --cov=backend --cov-report=term-missing:skip-covered --cov-report=xml:coverage.xml --cov-report=html:test-results/coverage
 
 # Run static type checking
 typecheck:

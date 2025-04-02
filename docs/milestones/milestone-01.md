@@ -124,11 +124,16 @@ This implementation plan outlines the steps to establish the development environ
 - **Description:** Create health check API endpoint
 - **Status:** COMPLETED
 - **Steps:**
-  - ✅ Added health check endpoint to `backend/api/main.py`
+  - ✅ Implemented modular API structure:
+    - ✅ Main app configuration in `backend/api/main.py`
+    - ✅ Route modules in `backend/api/routes/` (health, workflows)
+    - ✅ Core dependencies in `backend/api/routes/core/dependencies.py`
+    - ✅ Shared schemas in `backend/api/schemas.py`
   - ✅ Implemented Temporal client integration
   - ✅ Created synchronous and asynchronous workflow trigger endpoints
   - ✅ Added proper error handling and status codes
-- **Definition of Done:** API endpoints that demonstrate Temporal workflow execution
+  - ✅ Organized tests to match the route structure
+- **Definition of Done:** Modular API endpoints that demonstrate Temporal workflow execution
 
 ### 10. ✅ Documentation
 - **Priority:** Low

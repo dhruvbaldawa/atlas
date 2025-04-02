@@ -84,7 +84,7 @@ async def temporal_client(workflow_environment: WorkflowEnvironment) -> AsyncGen
     client = workflow_environment.client
 
     # Override the app's dependency to use this real client for API tests
-    from backend.api.main import get_temporal_client
+    from backend.api.routes.core.dependencies import get_temporal_client
 
     async def _get_real_temporal_client() -> Client:
         return client

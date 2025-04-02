@@ -29,8 +29,7 @@ test:
 # Run tests with coverage and generate reports (XML and HTML)
 test-cov:
     @echo "Running tests with coverage..."
-    mkdir -p test-results/coverage
-    uv run pytest --cov=backend --cov-report=term-missing:skip-covered --cov-report=xml:coverage.xml --cov-report=html:test-results/coverage
+    uv run pytest --cov=backend --cov-report=term-missing:skip-covered --cov-report=xml:coverage.xml --cov-report=html:skip-covered
 
 # Run static type checking
 typecheck:

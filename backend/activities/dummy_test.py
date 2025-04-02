@@ -1,7 +1,7 @@
 """Tests for dummy activities using Temporal's testing framework."""
 
-import time
-from datetime import datetime, timedelta
+# No longer need AsyncGenerator since we're using direct WorkflowEnvironment
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -15,7 +15,7 @@ from backend.activities.dummy import echo_message, get_current_time, simulate_wo
 async def test_get_current_time_direct():
     """Test the get_current_time activity directly without Temporal framework."""
     # Given
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     # When
     result = await get_current_time()
@@ -62,20 +62,15 @@ async def test_simulate_work_direct():
     duration = 1  # Use a short duration for testing
 
     # When
-    start_time = time.time()  # Measure actual execution time
-    result = await simulate_work(duration)
-    end_time = time.time()
-    execution_time = end_time - start_time
+    with patch("time.sleep") as mock_sleep:
+        result = await simulate_work(duration)
 
     # Then
+    # Verify the sleep was called with the right duration
+    mock_sleep.assert_called_once_with(duration)
+
     # Verify the result message
     assert result == f"Work completed after {duration} seconds"
-
-    # Verify that the activity took at least the specified duration
-    assert execution_time >= duration
-
-    # It shouldn't take too much longer than specified
-    assert execution_time < duration + 0.5
 
 
 @pytest.mark.asyncio
@@ -98,7 +93,7 @@ async def test_simulate_work_with_default_direct():
 
 
 @pytest.mark.asyncio
-async def test_workflow_integration():
+async def test_workflow_integration(workflow_environment: WorkflowEnvironment):
     """Integration test for workflow execution with real activities.
 
     This test demonstrates using Temporal's testing framework to verify
@@ -107,32 +102,34 @@ async def test_workflow_integration():
     # Given
     # Import the workflow here to avoid circular import issues
     from backend.workflows.dummy import DummyWorkflow
+
     test_message = "Integration Test Message"
+    # With pytest_asyncio.fixture, we directly get the environment
+    env = workflow_environment
 
-    async with await WorkflowEnvironment.start_time_skipping() as env:
-        # Create a worker with our workflow and activities
-        async with Worker(
-            env.client,
+    # Create a worker with our workflow and activities
+    async with Worker(
+        env.client,
+        task_queue="test-integration-queue",
+        workflows=[DummyWorkflow],
+        activities=[get_current_time, echo_message, simulate_work],
+    ):
+        # When
+        # Run the workflow with the integrated activities
+        result = await env.client.execute_workflow(
+            DummyWorkflow.run,
+            test_message,
+            id="test-integration-workflow",
             task_queue="test-integration-queue",
-            workflows=[DummyWorkflow],
-            activities=[get_current_time, echo_message, simulate_work],
-        ):
-            # When
-            # Run the workflow with the integrated activities
-            result = await env.client.execute_workflow(
-                DummyWorkflow.run,
-                test_message,
-                id="test-integration-workflow",
-                task_queue="test-integration-queue",
-            )
+        )
 
-            # Then
-            # Verify basic structure and content
-            assert isinstance(result, dict)
-            assert "start_time" in result
-            assert "echo_result" in result
-            assert "work_result" in result
-            assert "workflow_id" in result
+        # Then
+        # Verify basic structure and content
+        assert isinstance(result, dict)
+        assert "start_time" in result
+        assert "echo_result" in result
+        assert "work_result" in result
+        assert "workflow_id" in result
 
-            # Verify the echo message is correctly processed
-            assert result["echo_result"] == f"ECHO: {test_message}"
+        # Verify the echo message is correctly processed
+        assert result["echo_result"] == f"ECHO: {test_message}"

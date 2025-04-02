@@ -29,88 +29,89 @@ async def test_dummy_workflow_structure():
 
 
 @pytest.mark.asyncio
-async def test_dummy_workflow_execution():
+async def test_dummy_workflow_execution(workflow_environment: WorkflowEnvironment):
     """Test the dummy workflow execution using Temporal's test environment."""
     # Given
-    # Create the test environment with a worker running our workflow and activities
-    async with await WorkflowEnvironment.start_time_skipping() as env:
-        async with Worker(
-            env.client,
+    # With pytest_asyncio.fixture, we directly get the environment
+    env = workflow_environment
+    # Create a worker with our workflow and activities
+    async with Worker(
+        env.client,
+        task_queue="test-dummy-queue",
+        workflows=[DummyWorkflow],
+        activities=[get_current_time, echo_message, simulate_work],
+    ):
+        # When
+        # Execute the workflow without a message
+        result = await env.client.execute_workflow(
+            DummyWorkflow.run,
+            id="test-workflow-id",
             task_queue="test-dummy-queue",
-            workflows=[DummyWorkflow],
-            activities=[get_current_time, echo_message, simulate_work],
-        ):
-            # When
-            # Execute the workflow without a message
-            result = await env.client.execute_workflow(
-                DummyWorkflow.run,
-                id="test-workflow-id",
-                task_queue="test-dummy-queue",
-            )
+        )
 
-            # Then
-            # Check the result structure
-            assert isinstance(result, dict)
-            assert "start_time" in result
-            assert "echo_result" in result
-            assert "work_result" in result
-            assert "workflow_id" in result
+        # Then
+        # Check the result structure
+        assert isinstance(result, dict)
+        assert "start_time" in result
+        assert "echo_result" in result
+        assert "work_result" in result
+        assert "workflow_id" in result
 
-            # Verify values - note we're not asserting exact values since they're real
-            assert isinstance(result["start_time"], str)
-            assert result["echo_result"] is None
-            assert "Work completed after" in result["work_result"]
-            assert result["workflow_id"] == "test-workflow-id"
+        # Verify values - note we're not asserting exact values since they're real
+        assert isinstance(result["start_time"], str)
+        assert result["echo_result"] is None
+        assert "Work completed after" in result["work_result"]
+        assert result["workflow_id"] == "test-workflow-id"
 
-            # Given (for the second test case - with message)
-            test_message = "Hello, Temporal!"
+        # Given (for the second test case - with message)
+        test_message = "Hello, Temporal!"
 
-            # When
-            # Execute the workflow with a message
-            result_with_message = await env.client.execute_workflow(
-                DummyWorkflow.run,
-                test_message,
-                id="test-workflow-id-with-message",
-                task_queue="test-dummy-queue",
-            )
+        # When
+        # Execute the workflow with a message
+        result_with_message = await env.client.execute_workflow(
+            DummyWorkflow.run,
+            test_message,
+            id="test-workflow-id-with-message",
+            task_queue="test-dummy-queue",
+        )
 
-            # Then
-            # Verify message handling
-            assert result_with_message["echo_result"] == f"ECHO: {test_message}"
+        # Then
+        # Verify message handling
+        assert result_with_message["echo_result"] == f"ECHO: {test_message}"
 
 
 @pytest.mark.asyncio
-async def test_dummy_workflow_replay():
+async def test_dummy_workflow_replay(workflow_environment: WorkflowEnvironment):
     """Test workflow determinism through replay."""
     # Given
     test_message = "Replay Test"
     workflow_id = "replay-test-id"
-    async with await WorkflowEnvironment.start_time_skipping() as env:
-        # Create worker and register workflow and activities
-        async with Worker(
-            env.client,
+    env = workflow_environment
+    # Create worker and register workflow and activities
+    async with Worker(
+        env.client,
+        task_queue="test-replay-queue",
+        workflows=[DummyWorkflow],
+        activities=[get_current_time, echo_message, simulate_work],
+    ):
+        # When
+        # Execute the workflow first time
+        await env.client.execute_workflow(
+            DummyWorkflow.run,
+            test_message,
+            id=workflow_id,
             task_queue="test-replay-queue",
-            workflows=[DummyWorkflow],
-            activities=[get_current_time, echo_message, simulate_work],
-        ):
-            # When
-            # Execute the workflow first time
-            await env.client.execute_workflow(
-                DummyWorkflow.run,
-                test_message,
-                id=workflow_id,
-                task_queue="test-replay-queue",
-            )
+        )
 
-            # Then
-            # Get the workflow handle and verify it completed successfully
-            handle = env.client.get_workflow_handle(workflow_id)
-            result = await handle.result()
+        # Then
+        # Get the workflow handle and verify it completed successfully
+        handle = env.client.get_workflow_handle(workflow_id)
+        result = await handle.result()
 
-            # Verify we got a valid result
-            assert isinstance(result, dict)
-            assert result["echo_result"] == f"ECHO: {test_message}"
-            # For a true replay test in a more complex scenario,
-            # you would run another worker with the same workflow code
-            # and ensure it produces the same result when replaying the same events
-            # This is more relevant for workflows with complex logic and state
+        # Verify we got a valid result
+        assert isinstance(result, dict)
+        assert result["echo_result"] == f"ECHO: {test_message}"
+        # For a true replay test in a more complex scenario,
+        # you would run another worker with the same workflow code
+        # and ensure it produces the same result when replaying the same events
+        # This is more relevant for workflows with complex logic and state

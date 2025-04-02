@@ -301,7 +301,7 @@ async def test_article_workflow_processes_content():
     """Verify that the article workflow correctly processes content from a URL."""
     # Given
     article_url = "https://example.com/test-article"
-    
+
     async with await WorkflowEnvironment.start_time_skipping() as env:
         async with Worker(
             env.client,
@@ -316,7 +316,7 @@ async def test_article_workflow_processes_content():
                 id="test-workflow-id",
                 task_queue="test-queue",
             )
-            
+
             # Then
             assert result["status"] == "completed"
             assert result["url"] == article_url
@@ -340,10 +340,10 @@ async def test_fetch_content_activity_direct():
     """Test the activity function directly without Temporal."""
     # Given
     url = "https://example.com/article"
-    
+
     # When
     result = await fetch_content_activity(url)
-    
+
     # Then
     assert "content" in result
     assert result["status"] == "success"
@@ -375,7 +375,7 @@ async def test_workflow_with_real_activities():
                 id="test-workflow-id",
                 task_queue="test-queue",
             )
-            
+
             # Then
             assert result["status"] == "completed"
 ```
@@ -392,10 +392,10 @@ async def test_workflow_with_mocked_activities():
     # Create mocks for activities
     async def mock_fetch_content(url):
         return {"content": "Test content", "url": url}
-        
+
     async def mock_process_content(content):
         return {"processed": True, "word_count": 100}
-    
+
     # Register the mock activities in the test environment
     async with await WorkflowEnvironment.start_time_skipping() as env:
         async with Worker(
@@ -414,7 +414,7 @@ async def test_workflow_with_mocked_activities():
                 id="test-workflow-id",
                 task_queue="test-queue",
             )
-            
+
             # Then
             assert result["processed"] == True
             assert result["word_count"] == 100
@@ -446,7 +446,7 @@ async def test_workflow_with_timer():
                 id="timer-test-id",
                 task_queue="test-timer-queue",
             )
-            
+
             # Then
             assert result["timer_completed"] == True
             assert "execution_time" in result
@@ -477,13 +477,13 @@ async def test_workflow_determinism():
                 id=workflow_id,
                 task_queue="test-replay-queue",
             )
-            
+
             # Then
             # Get the workflow handle and verify it completed successfully
             handle = env.client.get_workflow_handle(workflow_id)
             result = await handle.result()
             assert result is not None
-            
+
             # For complex workflow logic, additional replay testing can be
             # implemented using env.replay_workflow or WorkflowReplayer
 ```
@@ -499,14 +499,14 @@ async def test_workflow_handles_activity_failure():
     # Given
     # Create an activity that fails on first call but succeeds on retry
     call_count = 0
-    
+
     async def failing_activity(input):
         nonlocal call_count
         call_count += 1
         if call_count == 1:
             raise ValueError("Simulated failure")
         return {"status": "success", "attempt": call_count}
-    
+
     # Test the workflow with the failing activity
     async with await WorkflowEnvironment.start_time_skipping() as env:
         async with Worker(
@@ -523,7 +523,7 @@ async def test_workflow_handles_activity_failure():
                 id="failure-test-id",
                 task_queue="test-queue",
             )
-            
+
             # Then
             # The workflow should complete despite the activity failure
             assert result["status"] == "success"

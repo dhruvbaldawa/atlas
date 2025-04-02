@@ -6,7 +6,7 @@ that the Temporal integration is working properly.
 
 import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 
 from temporalio import activity
 
@@ -24,7 +24,7 @@ async def get_current_time() -> str:
         str: Current time formatted as ISO string
     """
     logger.info("Executing get_current_time activity")
-    return datetime.utcnow().isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 @activity.defn

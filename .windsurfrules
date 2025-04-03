@@ -1,9 +1,195 @@
-- All the relevent context about how to work and what we are building is in `.rules/` directory.
-- Keep all documents up-to-date with the current state of the project and as we develop.
-- Plans for milestones in docs/milestones/milestone-*.md should be updated and marked as completed or in progress as we develop.
-- Act like a human and use the internet to search liberally
-    - when you are stuck
-    - when you need to see usage or API reference
-    - find information about a topic you need to know more about
-    - when you need to verify a fact or statistic
-    - when you are not confident about the next steps
+# Project Development Rules
+
+This document serves as a portable guide for project development, outlining general behavioral guidelines and best practices that can be applied to any software project. These rules should be followed precisely by both human developers and AI assistants with no deviation unless explicitly authorized.
+
+## 📋 Table of Contents
+- [Core Principles](#core-principles)
+- [Development Process](#development-process)
+- [AI Collaboration](#ai-collaboration)
+- [Code Standards](#code-standards)
+- [Testing & Debugging](#testing--debugging)
+- [Documentation & Security](#documentation--security)
+- [Version Control](#version-control)
+
+## Core Principles
+
+1. **Simplicity:** Prioritize simple, clear, and maintainable solutions. Avoid unnecessary complexity or over-engineering.
+2. **Iteration:** Build incrementally on working code rather than starting from scratch. Prefer small, incremental improvements unless a complete redesign is necessary.
+3. **Focus:** Concentrate on the specific task without scope creep. Complete one thing well before moving to the next.
+4. **Quality:** Maintain a clean, tested, and secure codebase. Pay down technical debt regularly.
+5. **Collaboration:** Follow established patterns and communicate effectively with team members.
+
+## Development Process
+
+### Documentation First
+- **Review First:** Always check relevant project documentation in the following locations:
+  - `.rules/` directory - Contains project-specific rules and domain knowledge:
+    - `why.md` - Project purpose, problem statements, and foundational principles
+    - `architecture.md` - System architecture and technical design patterns
+    - `plan.md` - Implementation strategy and project roadmap
+    - `testing.md` - Testing requirements and strategies
+    - `milestones.md` - High-level project milestones and delivery goals
+  - `docs/` directory - Contains project documentation that should be updated as the project evolves
+  - `docs/milestones/milestone-*.md` - Working documents for current plans and tasks
+  - `README.md` - Project overview and setup instructions
+- **Keep Current:** Maintain up-to-date documentation reflecting the current state of the project.
+- **Track Progress:**
+  - Prompt the user to update milestone documents (`docs/milestones/milestone-*.md`) as work progresses
+  - When all tasks for a milestone appear complete, ask the user to confirm before marking the milestone as completed
+  - Never automatically update milestone status without explicit user confirmation
+- **Seek Clarity:** If documentation is missing or unclear, seek clarification before proceeding.
+- **Update Triggers:** Initiate documentation update prompts when:
+  - Completing 3+ related tasks in a milestone
+  - Changing architectural patterns
+  - Modifying public APIs
+  - Addressing security-related issues
+
+### Research Approach
+AI agents must proactively use internet search for the following scenarios:
+- When facing uncertainty about implementation details
+- When needing reference documentation or API examples
+- To verify facts or statistics before making assertions
+- To deepen understanding of relevant topics
+- When encountering unfamiliar error messages or issues
+
+AI agents should not guess when uncertain - search first, then provide information based on accurate sources.
+
+### Before Making Changes
+1. **Understand Requirements:** Always review all relevant documentation thoroughly in this exact sequence:
+   - First: `.rules/` directory files relevant to the task
+   - Second: Specific task requirements in `docs/milestones/`
+   - Third: Project README and architecture documents
+   - Fourth: Technical specifications and established patterns
+
+   Never proceed with implementation until these have been reviewed and understood.
+
+   If any standard directories or files are missing, prompt the user rather than creating them automatically.
+
+2. **Plan Your Approach:**
+   - Identify affected components and dependencies
+   - Outline a systematic approach to changes
+   - Think about potential side effects
+
+### During Development
+1. **Follow Established Patterns:** Adhere to the project's architectural boundaries.
+2. **Regular Updates:** Track progress in appropriate status documents.
+3. **Incremental Testing:** Verify each component works correctly as you develop.
+4. **Refactor Proactively:** Improve code organization as you work, not as an afterthought.
+
+## AI Collaboration
+
+### Effective AI Interaction
+1. **Clear Instructions:** Provide specific, unambiguous directions when working with AI tools.
+2. **Context Awareness:** Reference relevant previous interactions and decisions.
+3. **Structured Interaction:** Break complex tasks into smaller steps for AI assistance.
+4. **Critical Review:** Always verify AI outputs before implementing them.
+
+### AI Agent Responsibilities
+1. **Proactive Clarification:** AI agents must ask clarifying questions when requirements are ambiguous.
+2. **Documentation First:** AI agents must check all relevant documentation before suggesting solutions.
+3. **Reasoning Transparency:** AI agents should explain their reasoning process for significant recommendations.
+4. **Error Handling:** When encountering errors, AI agents must investigate root causes rather than suggesting workarounds without understanding.
+5. **Missing Standard Files:** When standard files or directories (`.rules/`, `docs/`) are missing:
+   - Notify the user about which specific files/directories are missing
+   - Explain the purpose of the missing components
+   - Recommend creating them but wait for user confirmation before proceeding
+   - Provide templates or examples when suggesting new files
+6. **Rule Conflicts:** When project-specific rules conflict with general guidelines:
+   - Project-specific rules in `.rules/` directory always take precedence
+   - Local documentation overrides general guidance
+   - When in doubt, explicitly ask the user which approach to follow
+7. **Credit Efficiency:** Minimize unnecessary API calls and tool usage:
+   - Batch related code changes together instead of making multiple small edits
+   - Ask questions in groups rather than one at a time when possible
+   - Avoid redundant code searches when information is already in context
+
+### AI Assistance Best Practices
+1. **Use AI for Strengths:** Leverage AI for tasks it excels at (boilerplate generation, refactoring, syntax errors, test cases).
+2. **Maintain Human Oversight:** Keep humans in the loop for complex logic, architecture, and security decisions.
+3. **Suggest vs. Apply:** Clearly indicate when AI should suggest a change versus directly apply it.
+4. **Question Output:** Don't blindly trust confident-sounding but potentially incorrect suggestions.
+
+## Code Standards
+
+### General Practices
+- **Follow Conventions:** Use appropriate language-specific best practices and patterns.
+- **Strong Typing:** Always use strong typing and avoid `any` types.
+- **Consistent Style:** Maintain consistent coding style and follow linting rules.
+- **Documentation:** Document complex logic and public APIs thoroughly.
+- **Clear Naming:** Use meaningful variable and function names.
+- **Avoid Duplication:** Follow DRY (Don't Repeat Yourself) principle.
+
+### Code Organization
+- **Single Responsibility:** Break down large components into smaller, focused units.
+- **Logical Grouping:** Keep related code together and establish clear boundaries.
+- **Clear Naming Convention:**
+  - Use descriptive file names (avoid "temp", "refactored", etc. in permanent names)
+  - For variable names, use camelCase in JavaScript/TypeScript and snake_case in Python
+  - Name boolean variables with prefixes like "is", "has", "should"
+- **Pattern Consistency:** Adhere to established project patterns and avoid introducing new ones without explicit authorization.
+
+## Testing & Debugging
+
+### Testing Approach
+1. **Development Process:**
+   - For new features: implement code first, then outline tests based on the code behavior, write tests, and finally refactor. This approach prioritizes functional implementation before test coverage.
+   - For bug fixes: first fix the bug, then write a test that would have caught the bug, verifying the fix works.
+
+2. **Comprehensive Coverage:**
+   - Write thorough unit, integration, and/or end-to-end tests.
+   - Cover critical paths, edge cases, and major functionality.
+   - All tests must pass before considering a task complete.
+
+3. **Validation:**
+   - Use mock data only within test environments.
+   - Supplement automated tests with manual checks where appropriate.
+
+### Debugging Practices
+1. **Fix Root Causes:** Address underlying issues, not just symptoms.
+2. **Use Logging Effectively:** Check console/logs for errors and add targeted logging for complex issues.
+3. **Document Complex Fixes:** For significant bug fixes, document the problem and solution.
+4. **Use Available Tools:** Leverage debugging tools and research similar issues when stuck.
+
+## Documentation & Security
+
+### Documentation Maintenance
+- **Documentation Update Approach:**
+  - Do not automatically update documentation without user supervision
+  - Prompt the user at appropriate moments when documentation updates are needed
+  - Suggest specific documentation changes when:
+    - A feature or significant change is completed
+    - A bug requiring architectural changes is resolved
+    - Interfaces or APIs are modified
+    - A milestone or task appears to be completed
+  - Wait for user confirmation before implementing documentation changes
+- **Document Complexity:** Document APIs, complex algorithms, and non-obvious code with clear examples.
+- **Setup Instructions:** Maintain up-to-date installation and setup instructions.
+- **Known Issues:** Document known issues and their workarounds.
+
+### Security Best Practices
+1. **Server-Side Authority:** Keep sensitive logic and validation server-side.
+2. **Input Validation:** Always sanitize and validate all user input.
+3. **Dependency Management:** Be aware of security implications when adding dependencies.
+4. **Credential Protection:** Never hardcode secrets or credentials in code.
+
+## Version Control
+
+### Git Practices
+- **Atomic Commits:** Commit frequently with clear, descriptive messages.
+- **Branch Strategy:** Follow the project's established branching strategy.
+- **Clean Directory:** Keep the working directory clean and use .gitignore effectively.
+- **Security:** Never commit sensitive information (.env files, credentials, etc.).
+
+### Environment Management
+- **Cross-Environment Compatibility:** Code should function correctly across development, testing, and production environments.
+- **Configuration:** Use environment variables for configuration rather than hardcoded values.
+- **Templates:** Provide templates (.env.example) for required environment variables.
+- **Service Management:** Restart services after relevant configuration changes.
+
+### Research Validation
+- **Trusted Sources:** Prioritize information from:
+  - Official documentation (MDN, Python.org, etc.)
+  - Web search
+  - Perplexity
+  - RFC specifications
+  - Well-maintained OSS projects (10k+ GitHub stars)

@@ -138,4 +138,10 @@ For more detailed information about the architecture, refer to the [`.rules/arch
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](LICENSE) file for details.
+
+The AGPL-3.0 license ensures that:
+- You are free to use, modify, and distribute this software
+- If you modify the software, you must share those modifications under the same license
+- If you use a modified version of this software to provide a service over a network, you must make your modified source code available
+- This software cannot be relicensed under different terms without permission

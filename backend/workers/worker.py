@@ -5,7 +5,10 @@ workflows and activities. It handles graceful shutdown and logging.
 """
 
 import asyncio
+import importlib
+import inspect
 import logging
+import pkgutil
 import signal
 from collections.abc import Callable
 from typing import Any
@@ -13,11 +16,8 @@ from typing import Any
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-# Import all workflow and activity modules
-from backend.activities import dummy as dummy_activities
 from backend.config import get_settings
 from backend.temporal.client import create_temporal_client
-from backend.workflows import dummy as dummy_workflows
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -32,15 +32,23 @@ async def discover_workflows() -> list[Any]:
     Returns:
         List[Any]: List of workflow classes
     """
+    import backend.workflows
+
     workflow_classes = []
 
-    # Add known workflow classes
-    workflow_classes.extend(
-        [
-            dummy_workflows.DummyWorkflow,
-            dummy_workflows.ChainedDummyWorkflow,
-        ]
-    )
+    # Get all modules in the workflows package
+    for _, module_name, _ in pkgutil.iter_modules(backend.workflows.__path__, backend.workflows.__name__ + "."):
+        try:
+            # Import the module
+            module = importlib.import_module(module_name)
+
+            # Find all classes in the module that have the @workflow.defn decorator
+            for _, obj in inspect.getmembers(module, inspect.isclass):
+                # Check if this is a workflow class
+                if hasattr(obj, "__temporal_workflow_definition"):
+                    workflow_classes.append(obj)
+        except (ImportError, AttributeError) as e:
+            logger.warning(f"Error importing module {module_name}: {e}")
 
     logger.info(f"Discovered {len(workflow_classes)} workflow classes")
     return workflow_classes
@@ -52,16 +60,23 @@ async def discover_activities() -> dict[str, Callable]:
     Returns:
         Dict[str, Callable]: Dictionary of activity functions
     """
+    import backend.activities
+
     activities = {}
 
-    # Add known activity functions
-    activities.update(
-        {
-            "get_current_time": dummy_activities.get_current_time,
-            "echo_message": dummy_activities.echo_message,
-            "simulate_work": dummy_activities.simulate_work,
-        }
-    )
+    # Get all modules in the activities package
+    for _, module_name, _ in pkgutil.iter_modules(backend.activities.__path__, backend.activities.__name__ + "."):
+        try:
+            # Import the module
+            module = importlib.import_module(module_name)
+
+            # Find all functions in the module that have the @activity.defn decorator
+            for name, obj in inspect.getmembers(module, inspect.isfunction):
+                # Check if this is an activity function (decorated with @activity.defn)
+                if hasattr(obj, "__temporal_activity_definition"):
+                    activities[name] = obj
+        except (ImportError, AttributeError) as e:
+            logger.warning(f"Error importing module {module_name}: {e}")
 
     logger.info(f"Discovered {len(activities)} activity functions")
     return activities

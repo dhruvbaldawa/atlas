@@ -17,22 +17,41 @@ Inspired by Francis Bacon's "Of Studies," the workflow emphasizes distinct stage
 
 - Python 3.12 or higher
 - [UV](https://github.com/astral-sh/uv) for package management
-- PostgreSQL
+- PostgreSQL (for database)
+- Temporal server (for workflow execution)
 
-### Setup with UV
+### Setup with Just
+
+ATLAS uses [Just](https://github.com/casey/just) as a command runner for common development tasks:
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/atlas.git
 cd atlas
 
-# Create and activate a virtual environment using UV
+# Full setup (creates venv, installs dependencies, and sets up pre-commit hooks)
+just setup
+
+# Activate the virtual environment
+source .venv/bin/activate  # On Unix/MacOS
+# .venv\Scripts\activate  # On Windows
+```
+
+Alternatively, you can perform each step manually:
+
+```bash
+# Create virtual environment
 uv venv
+
+# Activate the virtual environment
 source .venv/bin/activate  # On Unix/MacOS
 # .venv\Scripts\activate  # On Windows
 
-# Install dependencies
-uv pip install -e ".[dev]"
+# Install dependencies with lock file
+just install-locked
+
+# Setup pre-commit hooks
+just setup-hooks
 ```
 
 ### Set up pre-commit hooks
@@ -43,37 +62,79 @@ pre-commit install
 
 ## Development
 
-### Code Formatting and Linting
-
-This project uses Ruff for linting and formatting:
+### Running the Application
 
 ```bash
-# Run linting
-ruff check .
+# Start the API server (with hot reload)
+just server
 
-# Run formatting
-ruff format .
+# In a separate terminal, start the worker
+just worker
 ```
 
-### Static Type Checking
+### Database Migrations
 
 ```bash
-# Run Pyright
-pyright
+# Create a new migration
+just migrate "Description of the changes"
+
+# Apply all migrations
+just migrate-up
+
+# Rollback the most recent migration
+just migrate-down
 ```
 
-### Running Tests
+### Code Quality
 
 ```bash
+# Run linting and formatting
+just lint
+
+# Run type checking
+just check
+
 # Run tests
-pytest
+just test
 
 # Run tests with coverage
-pytest --cov=backend/```
+just test-cov
+```
 
 ## Project Structure
 
-The project structure follows the architecture defined in the [`.rules/architecture.md`](.rules/architecture.md) document. This document details the separation of backend and frontend concerns, with the backend implementing a workflow-based architecture using Temporal for durable execution. Please refer to this document for the most up-to-date information about the project structure.
+The project implements a workflow-based architecture using Temporal for durable execution:
+
+```
+/backend
+├── activities/       # Temporal activity implementations
+├── api/              # FastAPI endpoints and server setup
+├── db/               # Database models and connections
+│   └── migrations/   # Alembic migrations
+├── temporal/         # Temporal client configuration
+├── workflows/        # Temporal workflow definitions
+└── workers/          # Temporal worker setup
+```
+
+For more detailed information about the architecture, refer to the [`.rules/architecture.md`](.rules/architecture.md) document.
+
+## Environment Variables
+
+### Database Configuration
+- `DB_HOST`: PostgreSQL host (default: localhost)
+- `DB_PORT`: PostgreSQL port (default: 5432)
+- `DB_NAME`: Database name (default: atlas)
+- `DB_USER`: Database username (default: postgres)
+- `DB_PASSWORD`: Database password (default: postgres)
+
+### Temporal Configuration
+- `TEMPORAL_HOST`: Temporal server host (default: localhost)
+- `TEMPORAL_PORT`: Temporal server port (default: 7233)
+- `TEMPORAL_NAMESPACE`: Temporal namespace (default: default)
+
+### API Configuration
+- `API_HOST`: API server host (default: 0.0.0.0)
+- `API_PORT`: API server port (default: 8000)
 
 ## License
 

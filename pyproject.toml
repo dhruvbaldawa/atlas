@@ -20,10 +20,16 @@ dependencies = [
     "uvicorn>=0.34.0",
     "sqlmodel>=0.0.16",
     "psycopg2-binary>=2.9.9",
+    "asyncpg>=0.29.0",
     "httpx>=0.28.0",
     "pydantic>=2.7.0",
+    "pydantic-settings>=2.2.1",
     "python-dotenv>=1.1.0",
     "typer>=0.15.0",
+    "temporalio>=1.5.0",
+    "ulid-py>=1.1.0",
+    "greenlet>=3.0.0",
+    "alembic>=1.13.0",
 ]
 
 [project.optional-dependencies]
@@ -31,6 +37,8 @@ dev = [
     "pytest>=8.3.0",
     "pytest-cov>=6.0.0",
     "pytest-html>=4.1.0",
+    "pytest-asyncio>=0.23.5",
+    "aiosqlite>=0.19.0",
     "ruff>=0.3.0",
     "pyright>=1.1.350",
     "pre-commit>=4.2.0",
@@ -39,6 +47,7 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+exclude = ["**/migrations/versions/**"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "B", "UP", "C90", "D"]
@@ -54,7 +63,7 @@ convention = "google"
 pythonVersion = "3.12"
 typeCheckingMode = "basic"
 include = ["backend"]
-exclude = ["**/__pycache__", "**/tests"]
+exclude = ["**/__pycache__", "**/tests", "**/migrations/versions"]
 reportMissingTypeStubs = "warning"
 reportIncompatibleMethodOverride = "warning"
 reportIncompatibleVariableOverride = "warning"
@@ -63,4 +72,16 @@ reportMissingParameterType = "warning"
 [tool.pytest.ini_options]
 testpaths = ["backend"]
 python_files = "*_test.py"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 python_functions = "test_*"
+# Filter out "coroutine was never awaited" warnings - these come from third-party libraries
+# and are difficult to fix without modifying the libraries themselves
+filterwarnings = [
+    "ignore::RuntimeWarning",  # Ignore all RuntimeWarnings
+]
+
+[tool.coverage.run]
+omit = ["*_test.py", "*/tests/*", "*/conftest.py"]
+source = ["backend"]
+branch = true

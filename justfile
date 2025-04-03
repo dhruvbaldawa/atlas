@@ -8,6 +8,7 @@ default:
 # Install dependencies
 install:
     uv pip install -e ".[dev]"
+    just lock
 
 # Sync virtual environment with pyproject.toml (including dev dependencies)
 sync:
@@ -25,13 +26,10 @@ setup-hooks:
 test:
     uv run pytest
 
-# Run tests with coverage
+# Run tests with coverage and generate reports (XML and HTML)
 test-cov:
-    uv run pytest --cov=backend
-
-# Run tests with HTML report
-test-html:
-    uv run pytest --html=test-results/report.html --self-contained-html
+    @echo "Running tests with coverage..."
+    uv run pytest --cov=backend --cov-report=term-missing:skip-covered --cov-report=xml:coverage.xml --cov-report=html:skip-covered
 
 # Run static type checking
 typecheck:
@@ -85,3 +83,23 @@ install-locked:
 
 # Setup the whole project from scratch
 setup: create-venv lock install-locked setup-hooks
+
+# Run the API server with auto-reload
+server:
+    uvicorn backend.api.main:app --reload
+
+# Run the worker
+worker:
+    python -m backend.workers.worker
+
+# Create a new migration with a message
+migrate message="auto":
+    alembic revision --autogenerate -m "{{message}}"
+
+# Apply all migrations
+migrate-up:
+    alembic upgrade head
+
+# Rollback one migration
+migrate-down:
+    alembic downgrade -1

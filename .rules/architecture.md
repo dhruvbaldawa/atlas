@@ -47,6 +47,11 @@ Temporal serves as our durable execution engine. In our architecture, Temporal p
 
 4. **API Layer**
    * Located in: `backend/api/`
+   * Modular structure with separate routers for different endpoint categories
+     * Main app in `backend/api/main.py` - bootstraps and configures FastAPI app
+     * Route modules in `backend/api/routes/` - organized by domain/feature
+     * Shared schemas in `backend/api/schemas.py` - common data models
+     * Core dependencies in `backend/api/routes/core/` - shared dependencies
    * FastAPI-based REST API that translates HTTP requests into workflow executions
    * Event handlers that initiate workflows in response to message queue events
 

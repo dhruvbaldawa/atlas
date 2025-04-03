@@ -11,7 +11,7 @@ version = "0.1.0"
 description = "ATLAS - A system for transforming web articles into valuable knowledge assets"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
+license = {text = "AGPL-3.0-or-later"}
 authors = [
     {name = "ATLAS Team"}
 ]
